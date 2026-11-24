@@ -76,33 +76,31 @@ def scan(symbols=None, modes=None, notify=True, min_grade="B", state_path=".stat
             except Exception as e:
                 print(f"[scan] {sym} {mode}: {e}")
                 continue
-            s = an["signal"]
-if not s:
-    continue
+                        s = an["signal"]
+            if not s:
+                continue
 
-signal_open = pd.Timestamp(s["time"])
-if signal_open.tzinfo is None:
-    signal_open = signal_open.tz_localize("UTC")
-else:
-    signal_open = signal_open.tz_convert("UTC")
+            signal_open = pd.Timestamp(s["time"])
+            if signal_open.tzinfo is None:
+                signal_open = signal_open.tz_localize("UTC")
+            else:
+                signal_open = signal_open.tz_convert("UTC")
 
-signal_close = signal_open + pd.Timedelta(
-    minutes=BAR_MIN[m["interval"]]
-)
-age = now - signal_close
+            signal_close = signal_open + pd.Timedelta(
+                minutes=BAR_MIN[m["interval"]]
+            )
+            age = now - signal_close
 
-entry_type = str(s.get("entry_type", "market")).lower()
+            entry_type = str(s.get("entry_type", "market")).lower()
+            valid_minutes = 15 if entry_type == "market" else max(
+                int(s.get("expiry", 1)), 1
+            ) * BAR_MIN[m["interval"]]
 
-valid_minutes = (
-    15 if entry_type == "market"
-    else max(int(s.get("expiry", 1)), 1) * BAR_MIN[m["interval"]]
-)
+            if age < pd.Timedelta(0) or age > pd.Timedelta(minutes=valid_minutes):
+                continue
 
-if age < pd.Timedelta(0) or age > pd.Timedelta(minutes=valid_minutes):
-    continue
-
-if GRADE_RANK[s["grade"]] < GRADE_RANK[min_grade]:
-    continue
+            if GRADE_RANK[s["grade"]] < GRADE_RANK[min_grade]:
+                continue
             key = f"{sym}|{mode}|{s['strategy']}|{s['side']}|{s['time']}"
             if key in seen:
                 continue
