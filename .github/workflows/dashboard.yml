@@ -1,15 +1,10 @@
+
 name: dashboard
-# Rebuilds the analysis page about every 15 minutes on weekdays (GitHub may run it a little late).
+
 on:
   schedule:
     - cron: "*/5 * * * 1-5"
   workflow_dispatch:
-
-permissions:
-  contents: read
-  actions: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -17,21 +12,35 @@ concurrency:
 
 jobs:
   build:
-    timeout-minutes: 20
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
+
       - run: pip install -r requirements.txt
+
       - run: python -m fxbot dashboard --out docs
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
         uses: actions/deploy-pages@v4
