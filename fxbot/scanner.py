@@ -76,7 +76,7 @@ def scan(symbols=None, modes=None, notify=True, min_grade="B", state_path=".stat
             except Exception as e:
                 print(f"[scan] {sym} {mode}: {e}")
                 continue
-                s = an["signal"]
+            s = an["signal"]
             if not s:
                 continue
 
